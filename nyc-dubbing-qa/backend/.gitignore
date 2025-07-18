@@ -5,6 +5,7 @@ node_modules/
 .env
 .env.local
 .env.production
+nyc-dubbing-qa/backend/.env 2
 
 # Build output
 dist/
@@ -52,4 +53,4 @@ temp/
 prisma/migrations/
 
 # Redis dump
-dump.rdb
+dump.rdbnyc-dubbing-qa/backend/.env 2
