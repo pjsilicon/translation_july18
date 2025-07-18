@@ -5,12 +5,48 @@ import ffmpegService from '../services/ffmpeg.service';
 import { logger } from '../utils/logger';
 import * as path from 'path';
 import * as fs from 'fs';
-import { v4 as uuidv4 } from 'uuid';
-import { videoStore } from '../services/video-store.service';
+import prisma from '../config/database';
 
 interface MulterRequest extends Request {
   file?: Express.Multer.File;
 }
+
+const getOrCreateDefaultProject = async () => {
+  let project = await prisma.project.findFirst({
+    where: { name: 'Default Project' },
+  });
+
+  if (!project) {
+    const user = await getOrCreateDefaultUser();
+    project = await prisma.project.create({
+      data: {
+        name: 'Default Project',
+        description: 'A default project for all uploaded videos.',
+        ownerId: user.id,
+      },
+    });
+  }
+
+  return project;
+};
+
+const getOrCreateDefaultUser = async () => {
+  let user = await prisma.user.findFirst({
+    where: { email: 'default-user@example.com' },
+  });
+
+  if (!user) {
+    user = await prisma.user.create({
+      data: {
+        email: 'default-user@example.com',
+        password: 'password', // This should be hashed in a real application
+        name: 'Default User',
+      },
+    });
+  }
+
+  return user;
+};
 
 export const uploadVideo = asyncHandler(async (req: MulterRequest, res: Response) => {
   if (!req.file) {
@@ -21,9 +57,9 @@ export const uploadVideo = asyncHandler(async (req: MulterRequest, res: Response
   }
 
   const { title, context, description } = req.body;
-  const videoId = uuidv4();
-
+  
   try {
+    const project = await getOrCreateDefaultProject();
     // Get video info with error handling
     let videoInfo = { duration: 0, width: 0, height: 0, fps: 0, codec: 'unknown', bitrate: 0 };
     let thumbnailPath = '';
@@ -39,7 +75,7 @@ export const uploadVideo = asyncHandler(async (req: MulterRequest, res: Response
     try {
       thumbnailPath = path.join(
         path.dirname(req.file.path),
-        `${videoId}_thumbnail.jpg`
+        `${path.basename(req.file.path, path.extname(req.file.path))}_thumbnail.jpg`
       );
       await ffmpegService.generateThumbnail(req.file.path, thumbnailPath);
       logger.info('Thumbnail generated', { thumbnailPath });
@@ -48,39 +84,39 @@ export const uploadVideo = asyncHandler(async (req: MulterRequest, res: Response
       // Continue without thumbnail
     }
 
-    // Save to store
-    const videoData = {
-      id: videoId,
-      title: title || path.basename(req.file.originalname, path.extname(req.file.originalname)),
-      originalFilename: req.file.originalname,
-      filePath: req.file.path,
-      fileSize: req.file.size,
-      mimeType: req.file.mimetype,
-      duration: videoInfo.duration,
-      width: videoInfo.width,
-      height: videoInfo.height,
-      fps: videoInfo.fps,
-      codec: videoInfo.codec,
-      bitrate: videoInfo.bitrate,
-      thumbnailPath,
-      context,
-      description,
-      status: 'uploaded',
-      uploadedAt: new Date()
-    };
+    // Save to database
+    const video = await prisma.video.create({
+      data: {
+        originalUrl: req.file.path,
+        thumbnailUrl: thumbnailPath,
+        duration: videoInfo.duration,
+        metadata: {
+          title: title || path.basename(req.file.originalname, path.extname(req.file.originalname)),
+          originalFilename: req.file.originalname,
+          fileSize: req.file.size,
+          mimeType: req.file.mimetype,
+          width: videoInfo.width,
+          height: videoInfo.height,
+          fps: videoInfo.fps,
+          codec: videoInfo.codec,
+          bitrate: videoInfo.bitrate,
+          context,
+          description,
+        },
+        projectId: project.id,
+      }
+    });
     
-    // Save to video store
-    videoStore.save(videoData);
-    logger.info('Video saved to store', { videoId });
+    logger.info('Video saved to database', { videoId: video.id });
 
     return res.status(201).json({
       success: true,
       data: {
-        videoId,
-        title: videoData.title,
-        duration: videoData.duration,
-        thumbnailUrl: `/api/videos/${videoId}/thumbnail`,
-        status: videoData.status
+        videoId: video.id,
+        title: (video.metadata as any)?.title,
+        duration: video.duration,
+        thumbnailUrl: `/api/videos/${video.id}/thumbnail`,
+        status: video.status
       }
     });
   } catch (error: any) {
@@ -102,19 +138,18 @@ export const transcribeVideo = asyncHandler(async (req: Request, res: Response) 
   const { videoId } = req.params;
   const { language, prompt } = req.body;
   let video: any;
-
   try {
-    // Get video from store
-    video = videoStore.get(videoId);
+    // Get video from database
+    video = await prisma.video.findUnique({ where: { id: videoId } });
     
-    if (!video || !fs.existsSync(video.filePath)) {
+    if (!video || !fs.existsSync(video.originalUrl)) {
       return res.status(404).json({
         success: false,
         error: 'Video not found'
       });
     }
     
-    const videoPath = path.resolve(video.filePath);
+    const videoPath = path.resolve(video.originalUrl);
 
     // Start transcription
     logger.info(`Starting transcription for video ${videoId}`);
@@ -131,18 +166,22 @@ export const transcribeVideo = asyncHandler(async (req: Request, res: Response) 
       transcriptionResult.segments
     );
 
-    // Save to store
-    const transcriptionData = {
-      videoId,
-      language: transcriptionResult.language,
-      duration: transcriptionResult.duration,
-      fullText: transcriptionResult.text,
-      segments: formattedSegments,
-      createdAt: new Date()
-    };
-    
-    // Update video with transcription
-    videoStore.update(videoId, { transcription: transcriptionData });
+    // Save to database
+    await prisma.video.update({
+      where: { id: videoId },
+      data: {
+        metadata: {
+          ...(video.metadata as any),
+          transcription: {
+            language: transcriptionResult.language,
+            duration: transcriptionResult.duration,
+            fullText: transcriptionResult.text,
+            segments: formattedSegments,
+            createdAt: new Date()
+          }
+        }
+      }
+    });
 
     // Clean up temporary audio files
     await whisperService.cleanupTempFiles(videoPath);
@@ -151,8 +190,8 @@ export const transcribeVideo = asyncHandler(async (req: Request, res: Response) 
       success: true,
       data: {
         videoId,
-        language: transcriptionData.language,
-        duration: transcriptionData.duration,
+        language: transcriptionResult.language,
+        duration: transcriptionResult.duration,
         segmentCount: formattedSegments.length,
         segments: formattedSegments
       }
@@ -163,7 +202,7 @@ export const transcribeVideo = asyncHandler(async (req: Request, res: Response) 
       message: error.message,
       stack: error.stack,
       videoId,
-      videoPath: (video as any)?.filePath
+      videoPath: video?.originalUrl
     });
     return res.status(500).json({
       success: false,
@@ -176,10 +215,12 @@ export const getTranscription = asyncHandler(async (req: Request, res: Response)
   const { videoId } = req.params;
 
   try {
-    // Get video from store
-    const video = videoStore.get(videoId);
+    // Get video from database
+    const video = await prisma.video.findUnique({ where: { id: videoId } });
     
-    if (!video || !video.transcription) {
+    const transcription = (video?.metadata as any)?.transcription;
+
+    if (!video || !transcription) {
       return res.status(404).json({
         success: false,
         error: 'Transcription not found'
@@ -189,9 +230,9 @@ export const getTranscription = asyncHandler(async (req: Request, res: Response)
     return res.json({
       success: true,
       data: {
-        videoId: video.transcription.videoId,
-        language: video.transcription.language,
-        segments: video.transcription.segments
+        videoId: video.id,
+        language: transcription.language,
+        segments: transcription.segments
       }
     });
   } catch (error) {
@@ -208,7 +249,37 @@ export const updateSegment = asyncHandler(async (req: Request, res: Response) =>
   const { text } = req.body;
 
   try {
-    // TODO: Update in database
+    const video = await prisma.video.findUnique({ where: { id: videoId } });
+    const transcription = (video?.metadata as any)?.transcription;
+
+    if (!video || !transcription) {
+      return res.status(404).json({
+        success: false,
+        error: 'Transcription not found'
+      });
+    }
+
+    const segmentIndex = transcription.segments.findIndex((s: any) => s.id === segmentId);
+
+    if (segmentIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        error: 'Segment not found'
+      });
+    }
+
+    transcription.segments[segmentIndex].text = text;
+
+    await prisma.video.update({
+      where: { id: videoId },
+      data: {
+        metadata: {
+          ...(video.metadata as any),
+          transcription
+        }
+      }
+    });
+
     logger.info(`Updating segment ${segmentId} for video ${videoId}`);
 
     return res.json({
@@ -232,20 +303,16 @@ export const getVideoThumbnail = asyncHandler(async (req: Request, res: Response
   const { videoId } = req.params;
 
   try {
-    // TODO: Get thumbnail path from database
-    const thumbnailPath = path.join(
-      process.env.UPLOAD_DIR || './uploads',
-      `${videoId}_thumbnail.jpg`
-    );
+    const video = await prisma.video.findUnique({ where: { id: videoId } });
 
-    if (!fs.existsSync(thumbnailPath)) {
+    if (!video || !video.thumbnailUrl || !fs.existsSync(video.thumbnailUrl)) {
       return res.status(404).json({
         success: false,
         error: 'Thumbnail not found'
       });
     }
 
-    return res.sendFile(thumbnailPath);
+    return res.sendFile(path.resolve(video.thumbnailUrl));
   } catch (error) {
     logger.error('Get thumbnail error:', error);
     return res.status(500).json({
@@ -259,8 +326,17 @@ export const deleteVideo = asyncHandler(async (req: Request, res: Response) => {
   const { videoId } = req.params;
 
   try {
-    // TODO: Get video info from database
-    // TODO: Delete video file, thumbnail, and all related data
+    const video = await prisma.video.findUnique({ where: { id: videoId } });
+
+    if (video) {
+      if (fs.existsSync(video.originalUrl)) {
+        await fs.promises.unlink(video.originalUrl);
+      }
+      if (video.thumbnailUrl && fs.existsSync(video.thumbnailUrl)) {
+        await fs.promises.unlink(video.thumbnailUrl);
+      }
+      await prisma.video.delete({ where: { id: videoId } });
+    }
     
     logger.info(`Deleted video ${videoId}`);
 

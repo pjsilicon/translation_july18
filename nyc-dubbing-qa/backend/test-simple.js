@@ -2,7 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'http://localhost:3001/api';
 
 // First, let's manually upload and check each step
 async function makeRequest(options, data = null) {
@@ -40,7 +40,7 @@ async function testTranscription() {
     console.log('Testing transcription endpoint...');
     const result = await makeRequest({
       hostname: 'localhost',
-      port: 3000,
+      port: 3001,
       path: `/api/videos/${videoId}/transcribe`,
       method: 'POST',
       headers: {

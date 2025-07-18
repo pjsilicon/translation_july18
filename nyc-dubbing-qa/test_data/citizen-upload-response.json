@@ -1,0 +1,10 @@
+{
+  "success": true,
+  "data": {
+    "videoId": "cmd9a9v000003orh7h814iwid",
+    "title": "Citizen Video Test",
+    "duration": 76,
+    "thumbnailUrl": "/api/videos/cmd9a9v000003orh7h814iwid/thumbnail",
+    "status": "UPLOADED"
+  }
+}

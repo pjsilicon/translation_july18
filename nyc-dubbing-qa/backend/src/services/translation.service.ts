@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { translationLogger as logger, logPerformance } from '../utils/logger';
 
 interface TranslationContext {
@@ -41,6 +42,7 @@ interface MergedTranslation {
 
 export class TranslationService {
   private openai: OpenAI;
+  private gemini: GoogleGenerativeAI;
   private languageMap: Record<string, string> = {
     es: 'Spanish',
     zh: 'Chinese (Mandarin)',
@@ -55,18 +57,28 @@ export class TranslationService {
   };
 
   constructor() {
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error('OPENAI_API_KEY is not set in the environment variables.');
+    }
+    if (!process.env.GOOGLE_API_KEY) {
+      throw new Error('GOOGLE_API_KEY is not set in the environment variables.');
+    }
+
     this.openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
+
+    this.gemini = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
     
     logger.info('TranslationService initialized', {
       openAIConfigured: !!process.env.OPENAI_API_KEY,
+      geminiConfigured: !!process.env.GOOGLE_API_KEY,
       supportedLanguages: Object.keys(this.languageMap).length
     });
   }
 
   /**
-   * Translate with context using two OpenAI models for comparison
+   * Translate with context using two AI models for comparison
    */
   async translateWithContext(
     segments: TranslationSegment[],
@@ -103,16 +115,16 @@ export class TranslationService {
         });
         
         // Translate with both models in parallel
-        const [gpt4Result, gpt4TurboResult] = await Promise.all([
+        const [gpt4Result, geminiResult] = await Promise.all([
           this.translateWithGPT4(segment, targetLanguage, contextPrompt),
-          this.translateWithGPT4Turbo(segment, targetLanguage, contextPrompt)
+          this.translateWithGemini(segment, targetLanguage, contextPrompt)
         ]);
 
         // Merge and evaluate translations
         const merged = await this.mergeTranslations(
           segment,
           gpt4Result,
-          gpt4TurboResult,
+          geminiResult,
           targetLanguage
         );
 
@@ -248,64 +260,48 @@ Provide only the translation, no explanations.`
   /**
    * Translate with GPT-4-turbo
    */
-  private async translateWithGPT4Turbo(
+  private async translateWithGemini(
     segment: TranslationSegment,
     targetLanguage: string,
     contextPrompt: string
   ): Promise<TranslationResult> {
     const startTime = Date.now();
     try {
-      logger.debug('Sending segment to GPT-4-turbo', {
+      logger.debug('Sending segment to Gemini Pro', {
         segmentId: segment.id,
         targetLanguage,
         originalLength: segment.text.length,
         originalWords: segment.text.split(/\s+/).length
       });
       
-      const completion = await this.openai.chat.completions.create({
-        model: 'gpt-4-turbo-preview',
-        messages: [
-          {
-            role: 'system',
-            content: contextPrompt
-          },
-          {
-            role: 'user',
-            content: `Translate the following segment to ${targetLanguage}. The segment duration is ${(segment.endTime - segment.startTime).toFixed(1)} seconds.
+      const model = this.gemini.getGenerativeModel({ model: "gemini-1.5-flash"});
+      const prompt = `${contextPrompt}\n\nTranslate the following segment to ${targetLanguage}. The segment duration is ${(segment.endTime - segment.startTime).toFixed(1)} seconds.\n\nOriginal text: "${segment.text}"\n\nProvide only the translation, no explanations.`;
 
-Original text: "${segment.text}"
-
-Provide only the translation, no explanations.`
-          }
-        ],
-        temperature: 0.5, // Slightly higher temperature for variation
-        max_tokens: 500,
-      });
-
-      const translatedText = completion.choices[0].message.content?.trim() || '';
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const translatedText = response.text().trim();
       const wordCount = translatedText.split(/\s+/).length;
       const estimatedDuration = this.estimateDuration(translatedText, targetLanguage);
       
-      logger.debug('GPT-4-turbo translation completed', {
+      logger.debug('Gemini Pro translation completed', {
         segmentId: segment.id,
         translatedLength: translatedText.length,
         translatedWords: wordCount,
         estimatedDuration: estimatedDuration.toFixed(2),
-        apiDuration: `${Date.now() - startTime}ms`,
-        usageTokens: completion.usage?.total_tokens
+        apiDuration: `${Date.now() - startTime}ms`
       });
 
       return {
         translatedText,
-        confidence: 0.85, // Base confidence for GPT-4-turbo
-        model: 'gpt-4-turbo',
+        confidence: 0.85, // Base confidence for Gemini Pro
+        model: 'gemini-1.5-flash',
         metadata: {
           wordCount,
           estimatedDuration
         }
       };
     } catch (error) {
-      logger.error('GPT-4-turbo translation failed', {
+      logger.error('Gemini Pro translation failed', {
         segmentId: segment.id,
         error: error instanceof Error ? error.message : String(error),
         duration: `${Date.now() - startTime}ms`
@@ -320,7 +316,7 @@ Provide only the translation, no explanations.`
   private async mergeTranslations(
     segment: TranslationSegment,
     gpt4Result: TranslationResult,
-    gpt4TurboResult: TranslationResult,
+    geminiResult: TranslationResult,
     targetLanguage: string
   ): Promise<MergedTranslation> {
     const startTime = Date.now();
@@ -328,15 +324,15 @@ Provide only the translation, no explanations.`
     // Calculate similarity between translations
     const similarity = this.calculateSimilarity(
       gpt4Result.translatedText,
-      gpt4TurboResult.translatedText
+      geminiResult.translatedText
     );
     
     logger.debug('Comparing translations', {
       segmentId: segment.id,
       similarity: similarity.toFixed(3),
       gpt4Words: gpt4Result.metadata?.wordCount,
-      gpt4TurboWords: gpt4TurboResult.metadata?.wordCount,
-      lengthDifference: Math.abs(gpt4Result.translatedText.length - gpt4TurboResult.translatedText.length)
+      geminiWords: geminiResult.metadata?.wordCount,
+      lengthDifference: Math.abs(gpt4Result.translatedText.length - geminiResult.translatedText.length)
     });
 
     // Determine which translation to use
@@ -366,7 +362,7 @@ Provide only the translation, no explanations.`
       const verification = await this.verifyTranslation(
         segment.text,
         gpt4Result.translatedText,
-        gpt4TurboResult.translatedText,
+        geminiResult.translatedText,
         targetLanguage
       );
       
@@ -387,7 +383,7 @@ Provide only the translation, no explanations.`
         similarity: similarity.toFixed(3),
         originalText: segment.text.substring(0, 100) + '...',
         gpt4Translation: gpt4Result.translatedText.substring(0, 100) + '...',
-        gpt4TurboTranslation: gpt4TurboResult.translatedText.substring(0, 100) + '...'
+        geminiTranslation: geminiResult.translatedText.substring(0, 100) + '...'
       });
     }
     
@@ -406,7 +402,7 @@ Provide only the translation, no explanations.`
       comparisonScore: similarity,
       metadata: {
         gpt4Result,
-        geminiResult: gpt4TurboResult, // Keep the same property name for compatibility
+        geminiResult,
         mergeStrategy
       }
     };
@@ -418,7 +414,7 @@ Provide only the translation, no explanations.`
   private async verifyTranslation(
     originalText: string,
     gpt4Translation: string,
-    gpt4TurboTranslation: string,
+    geminiTranslation: string,
     targetLanguage: string
   ): Promise<{
     preferredTranslation: string;
@@ -431,7 +427,7 @@ Provide only the translation, no explanations.`
         targetLanguage,
         originalLength: originalText.length,
         gpt4Length: gpt4Translation.length,
-        gpt4TurboLength: gpt4TurboTranslation.length
+        geminiLength: geminiTranslation.length
       });
       
       const completion = await this.openai.chat.completions.create({
@@ -445,8 +441,8 @@ Provide only the translation, no explanations.`
             role: 'user',
             content: `Original English: "${originalText}"
             
-Translation A: "${gpt4Translation}"
-Translation B: "${gpt4TurboTranslation}"
+Translation A (from GPT-4): "${gpt4Translation}"
+Translation B (from Gemini): "${geminiTranslation}"
 
 Target language: ${targetLanguage}
 
@@ -478,8 +474,8 @@ Respond with only "A" or "B".`
         };
       } else {
         return {
-          preferredTranslation: gpt4TurboTranslation,
-          preferredModel: 'gpt-4-turbo',
+          preferredTranslation: geminiTranslation,
+          preferredModel: 'gemini-1.5-flash',
           confidence: 0.85
         };
       }

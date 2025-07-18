@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import translationService from '../services/translation.service';
 import { logger } from '../utils/logger';
+import { AuthRequest } from '../middlewares/auth';
 
 export const translateVideo = asyncHandler(async (req: Request, res: Response) => {
   const { videoId } = req.params;
@@ -132,7 +133,7 @@ export const getSupportedLanguages = asyncHandler(async (req: Request, res: Resp
   });
 });
 
-export const approveTranslation = asyncHandler(async (req: Request, res: Response) => {
+export const approveTranslation = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { videoId, segmentId } = req.params;
   const { approvedText, reviewerNotes } = req.body;
 
@@ -159,7 +160,7 @@ export const approveTranslation = asyncHandler(async (req: Request, res: Respons
   }
 });
 
-export const rejectTranslation = asyncHandler(async (req: Request, res: Response) => {
+export const rejectTranslation = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { videoId, segmentId } = req.params;
   const { reason, suggestedText } = req.body;
 

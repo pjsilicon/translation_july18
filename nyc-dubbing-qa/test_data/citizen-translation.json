@@ -1,0 +1,350 @@
+{
+  "success": true,
+  "data": {
+    "targetLanguage": "spanish",
+    "segmentCount": 20,
+    "translations": [
+      {
+        "id": 1,
+        "originalText": "I'm an American citizen. I'm a voter.",
+        "translatedText": "Soy ciudadano estadounidense. Soy votante.",
+        "confidence": 0.7,
+        "primaryModel": "gpt-4",
+        "comparisonScore": 0.6,
+        "qaStatus": "flagged",
+        "metadata": {
+          "models": {
+            "gpt4": "Soy ciudadano estadounidense. Soy votante.",
+            "gemini": "Soy ciudadana estadounidense. Soy votante."
+          },
+          "mergeStrategy": "low_agreement_flagged",
+          "estimatedDuration": 1.7142857142857142
+        }
+      },
+      {
+        "id": 2,
+        "originalText": "And what has transpired throughout the years, as far as I'm concerned, has been reprehensible.",
+        "translatedText": "Y lo que ha sucedido a lo largo de los años, en lo que a mí respecta, ha sido reprobable.",
+        "confidence": 0.85,
+        "primaryModel": "gpt-4",
+        "comparisonScore": 0.875,
+        "qaStatus": "needs-review",
+        "metadata": {
+          "models": {
+            "gpt4": "Y lo que ha sucedido a lo largo de los años, en lo que a mí respecta, ha sido reprobable.",
+            "gemini": "Y lo que ha sucedido a lo largo de los años, en lo que a mí respecta, ha sido reprensible."
+          },
+          "mergeStrategy": "verified_selection",
+          "estimatedDuration": 6.857142857142857
+        }
+      },
+      {
+        "id": 3,
+        "originalText": "I'm a believer that the American people have been played as suckers for decades,",
+        "translatedText": "\"Soy de la opinión de que el pueblo estadounidense ha sido engañado durante décadas,\"",
+        "confidence": 0.7,
+        "primaryModel": "gpt-4",
+        "comparisonScore": 0.23809523809523808,
+        "qaStatus": "flagged",
+        "metadata": {
+          "models": {
+            "gpt4": "\"Soy de la opinión de que el pueblo estadounidense ha sido engañado durante décadas,\"",
+            "gemini": "Creo que al pueblo estadounidense lo han engañado como a tontos durante décadas."
+          },
+          "mergeStrategy": "low_agreement_flagged",
+          "estimatedDuration": 4.8
+        }
+      },
+      {
+        "id": 4,
+        "originalText": "that we've allowed politicians to become career politicians,",
+        "translatedText": "\"que hemos permitido que los políticos se conviertan en políticos de carrera,\"",
+        "confidence": 0.7,
+        "primaryModel": "gpt-4",
+        "comparisonScore": 0.6666666666666666,
+        "qaStatus": "flagged",
+        "metadata": {
+          "models": {
+            "gpt4": "\"que hemos permitido que los políticos se conviertan en políticos de carrera,\"",
+            "gemini": "que hemos permitido que los políticos se conviertan en políticos profesionales,"
+          },
+          "mergeStrategy": "low_agreement_flagged",
+          "estimatedDuration": 4.114285714285715
+        }
+      },
+      {
+        "id": 5,
+        "originalText": "to sit up there and pad their own wallets and look out for their own self-interest,",
+        "translatedText": "\"para sentarse allí arriba y engordar sus propios bolsillos, buscando solo su propio interés,\"",
+        "confidence": 0.7,
+        "primaryModel": "gpt-4",
+        "comparisonScore": 0.25,
+        "qaStatus": "flagged",
+        "metadata": {
+          "models": {
+            "gpt4": "\"para sentarse allí arriba y engordar sus propios bolsillos, buscando solo su propio interés,\"",
+            "gemini": "para engordar sus propias billeteras y velar por su propio interés,"
+          },
+          "mergeStrategy": "low_agreement_flagged",
+          "estimatedDuration": 4.8
+        }
+      },
+      {
+        "id": 6,
+        "originalText": "and it's been at the expense of the American people.",
+        "translatedText": "y ha sido a costa del pueblo estadounidense.",
+        "confidence": 0.95,
+        "primaryModel": "gpt-4",
+        "comparisonScore": 1,
+        "qaStatus": "approved",
+        "metadata": {
+          "models": {
+            "gpt4": "y ha sido a costa del pueblo estadounidense.",
+            "gemini": "y ha sido a costa del pueblo estadounidense."
+          },
+          "mergeStrategy": "high_agreement",
+          "estimatedDuration": 2.742857142857143
+        }
+      },
+      {
+        "id": 7,
+        "originalText": "My proof is the fact that we have a $37 trillion deficit.",
+        "translatedText": "Mi prueba es el hecho de que tenemos un déficit de 37 billones de dólares.",
+        "confidence": 0.95,
+        "primaryModel": "gpt-4",
+        "comparisonScore": 1,
+        "qaStatus": "approved",
+        "metadata": {
+          "models": {
+            "gpt4": "Mi prueba es el hecho de que tenemos un déficit de 37 billones de dólares.",
+            "gemini": "Mi prueba es el hecho de que tenemos un déficit de 37 billones de dólares."
+          },
+          "mergeStrategy": "high_agreement",
+          "estimatedDuration": 5.142857142857143
+        }
+      },
+      {
+        "id": 8,
+        "originalText": "How is that possible?",
+        "translatedText": "¿Cómo es eso posible?",
+        "confidence": 0.95,
+        "primaryModel": "gpt-4",
+        "comparisonScore": 1,
+        "qaStatus": "approved",
+        "metadata": {
+          "models": {
+            "gpt4": "¿Cómo es eso posible?",
+            "gemini": "¿Cómo es eso posible?"
+          },
+          "mergeStrategy": "high_agreement",
+          "estimatedDuration": 1.3714285714285714
+        }
+      },
+      {
+        "id": 9,
+        "originalText": "How could you possibly be doing your job and be $37 trillion in debt?",
+        "translatedText": "\"¿Cómo es posible que estén haciendo su trabajo y tengan una deuda de 37 billones de dólares?\"",
+        "confidence": 0.7,
+        "primaryModel": "gpt-4",
+        "comparisonScore": 0.47619047619047616,
+        "qaStatus": "flagged",
+        "metadata": {
+          "models": {
+            "gpt4": "\"¿Cómo es posible que estén haciendo su trabajo y tengan una deuda de 37 billones de dólares?\"",
+            "gemini": "¿Cómo es posible que esté desempeñando su trabajo con una deuda de 37 billones de dólares?"
+          },
+          "mergeStrategy": "low_agreement_flagged",
+          "estimatedDuration": 5.828571428571428
+        }
+      },
+      {
+        "id": 10,
+        "originalText": "How could you do that?",
+        "translatedText": "\"¿Cómo pudiste hacer eso?\"",
+        "confidence": 0.7,
+        "primaryModel": "gpt-4",
+        "comparisonScore": 0,
+        "qaStatus": "flagged",
+        "metadata": {
+          "models": {
+            "gpt4": "\"¿Cómo pudiste hacer eso?\"",
+            "gemini": "¿Cómo pudo hacerlo?"
+          },
+          "mergeStrategy": "low_agreement_flagged",
+          "estimatedDuration": 1.3714285714285714
+        }
+      },
+      {
+        "id": 11,
+        "originalText": "It's really certain things are just very, very simplistic to me.",
+        "translatedText": "Para mí, ciertas cosas son realmente muy, muy simples.",
+        "confidence": 0.7,
+        "primaryModel": "gpt-4",
+        "comparisonScore": 0.3333333333333333,
+        "qaStatus": "flagged",
+        "metadata": {
+          "models": {
+            "gpt4": "Para mí, ciertas cosas son realmente muy, muy simples.",
+            "gemini": "Es cierto que algunas cosas son muy, muy simples para mí."
+          },
+          "mergeStrategy": "low_agreement_flagged",
+          "estimatedDuration": 3.085714285714286
+        }
+      },
+      {
+        "id": 12,
+        "originalText": "Of course, that's not the only problem that we have.",
+        "translatedText": "Por supuesto, ese no es el único problema que tenemos.",
+        "confidence": 0.95,
+        "primaryModel": "gpt-4",
+        "comparisonScore": 1,
+        "qaStatus": "approved",
+        "metadata": {
+          "models": {
+            "gpt4": "Por supuesto, ese no es el único problema que tenemos.",
+            "gemini": "Por supuesto, ese no es el único problema que tenemos."
+          },
+          "mergeStrategy": "high_agreement",
+          "estimatedDuration": 3.4285714285714284
+        }
+      },
+      {
+        "id": 13,
+        "originalText": "But something needs to be said.",
+        "translatedText": "\"Pero algo debe decirse.\"",
+        "confidence": 0.7,
+        "primaryModel": "gpt-4",
+        "comparisonScore": 0.3333333333333333,
+        "qaStatus": "flagged",
+        "metadata": {
+          "models": {
+            "gpt4": "\"Pero algo debe decirse.\"",
+            "gemini": "Pero algo debe decirse."
+          },
+          "mergeStrategy": "low_agreement_flagged",
+          "estimatedDuration": 1.3714285714285714
+        }
+      },
+      {
+        "id": 14,
+        "originalText": "And when I say what I say, people can dismiss it all they want to",
+        "translatedText": "Y cuando digo lo que digo, la gente puede ignorarlo todo lo que quiera.",
+        "confidence": 0.85,
+        "primaryModel": "gpt-4",
+        "comparisonScore": 0.8461538461538461,
+        "qaStatus": "needs-review",
+        "metadata": {
+          "models": {
+            "gpt4": "Y cuando digo lo que digo, la gente puede ignorarlo todo lo que quiera.",
+            "gemini": "Y cuando digo lo que digo, la gente puede desecharlo todo lo que quiera."
+          },
+          "mergeStrategy": "verified_selection",
+          "estimatedDuration": 4.8
+        }
+      },
+      {
+        "id": 15,
+        "originalText": "because I have no desire to be a politician.",
+        "translatedText": "porque no tengo ningún deseo de ser político.",
+        "confidence": 0.7,
+        "primaryModel": "gpt-4",
+        "comparisonScore": 0.625,
+        "qaStatus": "flagged",
+        "metadata": {
+          "models": {
+            "gpt4": "porque no tengo ningún deseo de ser político.",
+            "gemini": "porque no deseo ser político."
+          },
+          "mergeStrategy": "low_agreement_flagged",
+          "estimatedDuration": 2.742857142857143
+        }
+      },
+      {
+        "id": 16,
+        "originalText": "I'm sincere with that.",
+        "translatedText": "Soy sincero en eso.",
+        "confidence": 0.7,
+        "primaryModel": "gpt-4",
+        "comparisonScore": 0.14285714285714285,
+        "qaStatus": "flagged",
+        "metadata": {
+          "models": {
+            "gpt4": "Soy sincero en eso.",
+            "gemini": "Lo digo en serio."
+          },
+          "mergeStrategy": "low_agreement_flagged",
+          "estimatedDuration": 1.3714285714285714
+        }
+      },
+      {
+        "id": 17,
+        "originalText": "I just signed a multi-year contract extension with ESPN",
+        "translatedText": "Acabo de firmar una extensión de contrato de varios años con ESPN.",
+        "confidence": 0.85,
+        "primaryModel": "gpt-4",
+        "comparisonScore": 0.7272727272727273,
+        "qaStatus": "needs-review",
+        "metadata": {
+          "models": {
+            "gpt4": "Acabo de firmar una extensión de contrato de varios años con ESPN.",
+            "gemini": "Acabo de firmar una extensión de contrato plurianual con ESPN."
+          },
+          "mergeStrategy": "verified_selection",
+          "estimatedDuration": 4.114285714285715
+        }
+      },
+      {
+        "id": 18,
+        "originalText": "that will pay me exponentially more than being a politician would ever pay me.",
+        "translatedText": "\"que me pagará exponencialmente más de lo que jamás me pagaría ser político.\"",
+        "confidence": 0.85,
+        "primaryModel": "gpt-4",
+        "comparisonScore": 0.7692307692307693,
+        "qaStatus": "needs-review",
+        "metadata": {
+          "models": {
+            "gpt4": "\"que me pagará exponencialmente más de lo que jamás me pagaría ser político.\"",
+            "gemini": "que me pagará exponencialmente más de lo que jamás me pagaría ser político."
+          },
+          "mergeStrategy": "verified_selection",
+          "estimatedDuration": 4.457142857142857
+        }
+      },
+      {
+        "id": 19,
+        "originalText": "I don't need politics.",
+        "translatedText": "\"No necesito política.\"",
+        "confidence": 0.7,
+        "primaryModel": "gpt-4",
+        "comparisonScore": 0.2,
+        "qaStatus": "flagged",
+        "metadata": {
+          "models": {
+            "gpt4": "\"No necesito política.\"",
+            "gemini": "No necesito política."
+          },
+          "mergeStrategy": "low_agreement_flagged",
+          "estimatedDuration": 1.0285714285714287
+        }
+      },
+      {
+        "id": 20,
+        "originalText": "But the fact is is that our country is in a very, very bad spot.",
+        "translatedText": "\"Pero el hecho es que nuestro país está en una situación muy, muy mala.\"",
+        "confidence": 0.7,
+        "primaryModel": "gpt-4",
+        "comparisonScore": 0.45,
+        "qaStatus": "flagged",
+        "metadata": {
+          "models": {
+            "gpt4": "\"Pero el hecho es que nuestro país está en una situación muy, muy mala.\"",
+            "gemini": "Pero la realidad es que nuestro país se encuentra en una situación muy, muy grave."
+          },
+          "mergeStrategy": "low_agreement_flagged",
+          "estimatedDuration": 4.8
+        }
+      }
+    ],
+    "overallConfidence": 0.7799999999999998
+  }
+}

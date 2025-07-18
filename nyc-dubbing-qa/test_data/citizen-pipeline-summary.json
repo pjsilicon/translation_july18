@@ -1,0 +1,23 @@
+{
+  "videoFile": "Citizen.mp4",
+  "processedAt": "2025-07-18T20:41:21.693Z",
+  "transcription": {
+    "language": "english",
+    "segments": 8,
+    "totalDuration": 40
+  },
+  "translation": {
+    "targetLanguage": "spanish",
+    "overallConfidence": 0.7799999999999998,
+    "qualityBreakdown": {
+      "approved": 4,
+      "needsReview": 4,
+      "flagged": 12
+    }
+  },
+  "audio": {
+    "voice": "Sarah (EXAVITQu4vr4xnSDxMaL)",
+    "segmentsGenerated": 8,
+    "totalAudioFiles": 8
+  }
+}

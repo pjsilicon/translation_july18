@@ -1,27 +1,36 @@
-require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const FormData = require('form-data');
 const fetch = require('node-fetch');
 
 const API_URL = 'http://localhost:3000/api';
-const VIDEO_PATH = path.join(__dirname, 'uploads', 'testvid.mp4');
+const VIDEO_PATH = path.join(__dirname, '../test_data/testvid.mp4');
+
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 async function testPipeline() {
   console.log('🎬 Testing full video processing pipeline...\n');
-  
+
   try {
+    // Wait for server to start
+    await delay(3000);
+
     // 1. Upload video
     console.log('1️⃣ UPLOADING VIDEO...');
     const formData = new FormData();
     formData.append('video', fs.createReadStream(VIDEO_PATH));
     formData.append('title', 'Test Video');
     formData.append('context', 'Test video for NYC dubbing QA platform');
-    
+
     const uploadResponse = await fetch(`${API_URL}/videos/upload`, {
       method: 'POST',
       body: formData
     });
+
+    if (!uploadResponse.ok) {
+      const errorText = await uploadResponse.text();
+      throw new Error(`Upload failed with status ${uploadResponse.status}: ${errorText}`);
+    }
     
     const uploadResult = await uploadResponse.json();
     console.log('Upload response:', JSON.stringify(uploadResult, null, 2));

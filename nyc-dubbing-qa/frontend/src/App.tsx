@@ -16,23 +16,26 @@ const App = () => {
   const [videoContext, setVideoContext] = useState('');
   const [voices, setVoices] = useState<any[]>([]);
   const [selectedVoice, setSelectedVoice] = useState<string>('');
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
   
   // Fetch available voices on mount
   useEffect(() => {
     const fetchVoices = async () => {
       try {
         const response = await audioAPI.getVoices();
-        if (response.success && response.data?.voices) {
+        if (response.success && response.data?.voices && response.data.voices.length > 0) {
           setVoices(response.data.voices);
-          // Set default voice to the first available voice
-          if (response.data.voices.length > 0) {
-            setSelectedVoice(response.data.voices[0].voice_id);
-          }
+          setSelectedVoice(response.data.voices[0].voice_id);
+        } else {
+          setVoices([]);
+          setSelectedVoice('');
+          toast.error('Could not fetch voices. Please try again later.');
         }
       } catch (error) {
         console.error('Failed to fetch voices:', error);
-        // Set a default voice ID if fetch fails
-        setSelectedVoice('21m00Tcm4TlvDq8ikWAM'); // Rachel voice ID as fallback
+        setVoices([]);
+        setSelectedVoice('');
+        toast.error('Could not fetch voices. Please try again later.');
       }
     };
     
@@ -109,7 +112,7 @@ const App = () => {
       const response = await translationAPI.translate({
         videoId,
         targetLanguage: selectedLanguage,
-        segments: transcription.map(seg => ({
+        segments: transcription.map((seg: any) => ({
           id: seg.id,
           text: seg.text,
           startTime: seg.startTime,
@@ -125,8 +128,8 @@ const App = () => {
         translation: trans.translatedText,
         confidence: trans.confidence,
         qaStatus: trans.qaStatus,
-        startTime: transcription.find(t => t.id === trans.id)?.startTime || 0,
-        endTime: transcription.find(t => t.id === trans.id)?.endTime || 0,
+        startTime: transcription.find((t: any) => t.id === trans.id)?.startTime || 0,
+        endTime: transcription.find((t: any) => t.id === trans.id)?.endTime || 0,
         originalText: trans.originalText
       }));
       
@@ -142,7 +145,7 @@ const App = () => {
   };
 
   const handleTranslationEdit = async (segmentId: string, newTranslation: string) => {
-    setTranslations(prev => prev.map(seg => 
+    setTranslations((prev: any[]) => prev.map((seg: any) => 
       seg.id === segmentId ? { ...seg, translation: newTranslation, qaStatus: 'edited' } : seg
     ));
   };
@@ -152,7 +155,7 @@ const App = () => {
     
     try {
       await qaAPI.approveSegment(videoId, segmentId);
-      setTranslations(prev => prev.map(seg => 
+      setTranslations((prev: any[]) => prev.map((seg: any) => 
         seg.id === segmentId ? { ...seg, qaStatus: 'approved' } : seg
       ));
       toast.success('Segment approved');
@@ -168,9 +171,9 @@ const App = () => {
     setProcessingMessage('Generating audio with ElevenLabs...');
     
     try {
-      await audioAPI.generateAudio({
+      const response = await audioAPI.generateAudio({
         videoId,
-        segments: translations.map(seg => ({
+        segments: translations.map((seg: any) => ({
           id: seg.id,
           text: seg.translation,
           startTime: seg.startTime,
@@ -180,6 +183,7 @@ const App = () => {
         language: selectedLanguage
       });
       
+      setAudioUrl(response.data.audioUrl);
       setIsProcessing(false);
       setCurrentStep(4);
       toast.success('Audio generation completed!');
@@ -503,11 +507,13 @@ const App = () => {
         <div className="bg-gray-50 rounded-lg p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <span className="font-medium">Voice Model</span>
-            <span className="text-sm text-gray-600">Mayor Johnson (Cloned)</span>
+            <span className="text-sm text-gray-600">{voices.find(v => v.voice_id === selectedVoice)?.name || 'Default Voice'}</span>
           </div>
           <div className="flex items-center justify-between mb-4">
             <span className="font-medium">Duration</span>
-            <span className="text-sm text-gray-600">1:23</span>
+            <span className="text-sm text-gray-600">{
+              (translations.reduce((acc, seg) => acc + (seg.endTime - seg.startTime), 0)).toFixed(1)
+            }s</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="font-medium">Quality Check</span>
@@ -516,14 +522,26 @@ const App = () => {
         </div>
 
         <div className="flex space-x-3 justify-center">
-          <button className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+          <button 
+            onClick={() => {
+              if (audioUrl) {
+                const audio = new Audio(audioUrl);
+                audio.play();
+              }
+            }}
+            disabled={!audioUrl}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center disabled:bg-gray-400">
             <Play className="w-5 h-5 mr-2" />
             Preview Audio
           </button>
-          <button className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center">
+          <a
+            href={audioUrl || '#'}
+            download={`translated_audio_${videoId}.mp3`}
+            className={`px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center ${!audioUrl ? 'pointer-events-none opacity-50' : ''}`}
+          >
             <Download className="w-5 h-5 mr-2" />
             Download Audio
-          </button>
+          </a>
         </div>
       </div>
     </div>
