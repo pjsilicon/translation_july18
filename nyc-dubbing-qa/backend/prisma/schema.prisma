@@ -1,0 +1,136 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  QA_REVIEWER
+  PROJECT_MANAGER
+  USER
+}
+
+enum ProjectStatus {
+  DRAFT
+  IN_PROGRESS
+  REVIEW
+  COMPLETED
+  ARCHIVED
+}
+
+enum VideoStatus {
+  UPLOADED
+  PROCESSING
+  READY
+  FAILED
+}
+
+enum DubbingStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      UserRole @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projects      Project[]
+  reviews       Review[]
+  notifications Notification[]
+}
+
+model Project {
+  id          String        @id @default(cuid())
+  name        String
+  description String?
+  status      ProjectStatus @default(DRAFT)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id])
+
+  videos  Video[]
+  reviews Review[]
+}
+
+model Video {
+  id           String      @id @default(cuid())
+  originalUrl  String
+  processedUrl String?
+  thumbnailUrl String?
+  duration     Int? // in seconds
+  status       VideoStatus @default(UPLOADED)
+  metadata     Json?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id])
+
+  dubbings Dubbing[]
+  reviews  Review[]
+}
+
+model Dubbing {
+  id           String        @id @default(cuid())
+  language     String
+  voiceId      String
+  audioUrl     String?
+  status       DubbingStatus @default(PENDING)
+  metadata     Json?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  videoId String
+  video   Video @relation(fields: [videoId], references: [id])
+
+  reviews Review[]
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int // 1-5
+  comments  String?
+  issues    Json? // Array of issues found
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reviewerId String
+  reviewer   User   @relation(fields: [reviewerId], references: [id])
+
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id])
+
+  videoId String?
+  video   Video? @relation(fields: [videoId], references: [id])
+
+  dubbingId String?
+  dubbing   Dubbing? @relation(fields: [dubbingId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  type      String
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+}
