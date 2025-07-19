@@ -83,7 +83,7 @@ const App = () => {
         
         // Start transcription
         setProcessingMessage('Extracting audio and transcribing with Whisper AI...');
-        const transcribeResponse = await videoAPI.transcribe(uploadedVideoId, {
+        await videoAPI.transcribe(uploadedVideoId, {
           prompt: videoContext
         });
         

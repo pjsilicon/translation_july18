@@ -9,6 +9,9 @@ import qaRoutes from './qa.routes';
 
 const router = Router();
 
+// Health check endpoint
+router.get('/healthz', (_req, res) => res.json({ ok: true, when: new Date().toISOString() }));
+
 // Mount routes
 router.use('/auth', authRoutes);
 router.use('/users', userRoutes);

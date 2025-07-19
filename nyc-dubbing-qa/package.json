@@ -1,0 +1,19 @@
+{
+  "name": "nyc-dubbing-qa",
+  "version": "1.0.0",
+  "description": "NYC Dubbing QA Platform with dual-model translation system",
+  "scripts": {
+    "dev:backend": "cd backend && cross-env PORT=3001 npm run dev",
+    "dev:frontend": "cd frontend && npm run dev -- --host 0.0.0.0 --port 5173",
+    "dev": "concurrently -k -n BACKEND,FRONTEND -c cyan,green \"npm run dev:backend\" \"wait-on http://localhost:3001/health && npm run dev:frontend\"",
+    "dev:clean": "npx kill-port 3001 5173 && npm run dev",
+    "build": "cd backend && npm run build && cd ../frontend && npm run build",
+    "start": "cd backend && npm start"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.0",
+    "cross-env": "^7.0.3",
+    "kill-port": "^2.0.1",
+    "wait-on": "^8.0.3"
+  }
+}
